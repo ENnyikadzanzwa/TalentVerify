@@ -1,0 +1,11 @@
+<!-- talent_verify/templates/talent_verify/create_company.html -->
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h1>Create Company</h1>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save</button>
+  </form>
+{% endblock %}

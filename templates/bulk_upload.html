@@ -1,0 +1,11 @@
+<!-- talent_verify/templates/talent_verify/bulk_upload.html -->
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h1>Bulk Upload</h1>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Upload</button>
+  </form>
+{% endblock %}

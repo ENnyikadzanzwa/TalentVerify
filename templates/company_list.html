@@ -1,0 +1,11 @@
+<!-- talent_verify/templates/talent_verify/company_list.html -->
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h1>Company List</h1>
+  <ul>
+    {% for company in companies %}
+      <li><a href="{% url 'company_detail' company.company_id %}">{{ company.company_name }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}

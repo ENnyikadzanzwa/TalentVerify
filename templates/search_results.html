@@ -1,0 +1,11 @@
+<!-- talent_verify/templates/talent_verify/search_results.html -->
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h1>Search Results for "{{ query }}"</h1>
+  <ul>
+    {% for employee in employees %}
+      <li><a href="{% url 'employee_detail' employee.employee_id %}">{{ employee.employee_name }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}
