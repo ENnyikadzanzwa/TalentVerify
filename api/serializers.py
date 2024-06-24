@@ -6,11 +6,13 @@ class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
         fields = '__all__'
-
+        
 class DepartmentSerializer(serializers.ModelSerializer):
+    employee_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Department
-        fields = '__all__'
+        fields = ['department_id', 'department_name', 'employee_count']
 
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:

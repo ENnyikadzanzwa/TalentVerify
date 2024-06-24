@@ -1,5 +1,3 @@
-// AddEmployee.js
-
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../axiosConfig';
 import { toast } from 'react-toastify';
@@ -24,14 +22,18 @@ const AddEmployee = () => {
   useEffect(() => {
     const fetchUserAndDepartments = async () => {
       try {
-        const userResponse = await axiosInstance.get('/user/me/', {
+        const userResponse = await axiosInstance.get('/me/', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
         setCompanyId(userResponse.data.company_id);
 
-        const departmentsResponse = await axiosInstance.get(`/departments/?company=${userResponse.data.company_id}`);
+        const departmentsResponse = await axiosInstance.get(`/departments/`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
         setDepartments(departmentsResponse.data);
       } catch (error) {
         console.error('Error fetching user or departments:', error);

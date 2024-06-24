@@ -26,6 +26,7 @@ urlpatterns = [
     path('me/', current_user, name='current_user'),
     path('add_employee/', add_employee, name='add_employee'),
     path('bulk/', bulk_upload_employees, name='bulk_upload_employees'),
-    path('department_employees/', department_employees, name='department_employees'),
     path('company/', get_company_details, name='get_company_details'),
+    path('department/<int:department_id>/employees/', department_employees, name='department_employees'),
+    path('employee/<int:employee_id>/', get_employee_details, name='get_employee_details'),
 ]

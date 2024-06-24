@@ -8,6 +8,7 @@ import CompanyHomePage from '../Companies/CompanyHomePage';
 import CompanyProfile from '../Companies/CompanyProfile';
 import AddEmployee from '../Employees/AddEmployee';
 import ManageDepartments from '../Departments/ManageDepartments';
+import EmployeeList from '../Employees/EmployeeList'; // Import the EmployeeList component
 import logo from '../../assets/logo.webp'; // Import the logo image
 
 const drawerWidth = 240;
@@ -40,6 +41,8 @@ const CompanyAdminDashboard = () => {
         return <AddEmployee />;
       case 'departments':
         return <ManageDepartments />;
+      case 'employees':
+        return <EmployeeList />;
       default:
         return <CompanyHomePage />;
     }
@@ -66,6 +69,10 @@ const CompanyAdminDashboard = () => {
         <ListItem button onClick={() => setActiveComponent('departments')}>
           <ListItemIcon><GroupIcon /></ListItemIcon>
           <ListItemText primary="Manage Departments" />
+        </ListItem>
+        <ListItem button onClick={() => setActiveComponent('employees')}>
+          <ListItemIcon><GroupIcon /></ListItemIcon>
+          <ListItemText primary="View Employees" />
         </ListItem>
       </List>
       <ListItem button onClick={handleLogout}>

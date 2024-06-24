@@ -35,9 +35,12 @@ class DepartmentViewSet(viewsets.ModelViewSet):
 
 
 class EmployeeViewSet(viewsets.ModelViewSet):
-    queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        user = self.request.user
+        return Employee.objects.filter(company=user.company)
 
 class EmployeeDutyViewSet(viewsets.ModelViewSet):
     queryset = EmployeeDuty.objects.all()
@@ -226,17 +229,32 @@ def bulk_upload_employees(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def department_employees(request):
-    user = request.user
+def department_employees(request, department_id):
     try:
-        employee = Employee.objects.get(employee_number=user.username)
-        department = employee.department
-        employees = Employee.objects.filter(department=department)
-        serializer = EmployeeSerializer(employees, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    except Employee.DoesNotExist:
-        return Response({'detail': 'Employee not found.'}, status=status.HTTP_404_NOT_FOUND)
-
+        department = Department.objects.get(pk=department_id, company=request.user.company)
+    except Department.DoesNotExist:
+        return Response({'detail': 'Department not found.'}, status=404)
+    
+    employees = Employee.objects.filter(department=department)
+    employee_data = []
+    for employee in employees:
+        duties = EmployeeDuty.objects.filter(employee=employee)
+        experiences = EmployeeExperience.objects.filter(employee=employee)
+        fernet = Fernet(settings.ENCRYPTION_KEY.encode())
+        decrypted_dob = fernet.decrypt(employee.date_of_birth.encode()).decode()
+        employee_data.append({
+            'employee_id': employee.employee_id,
+            'employee_name': employee.employee_name,
+            'employee_number': employee.employee_number,
+            'role': employee.role,
+            'email': employee.email,
+            'gender': employee.gender,
+            'date_of_birth': decrypted_dob,
+            'duties': EmployeeDutySerializer(duties, many=True).data,
+            'experiences': EmployeeExperienceSerializer(experiences, many=True).data,
+        })
+    
+    return Response(employee_data)
 
 
 @api_view(['GET'])
@@ -245,3 +263,31 @@ def get_company_details(request):
     company = request.user.company
     serializer = CompanySerializer(company)
     return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_employee_details(request, employee_id):
+    try:
+        employee = Employee.objects.get(pk=employee_id, company=request.user.company)
+    except Employee.DoesNotExist:
+        return Response({'detail': 'Employee not found.'}, status=404)
+
+    duties = EmployeeDuty.objects.filter(employee=employee)
+    experiences = EmployeeExperience.objects.filter(employee=employee)
+    
+    fernet = Fernet(settings.ENCRYPTION_KEY.encode())
+    decrypted_dob = fernet.decrypt(employee.date_of_birth.encode()).decode()
+    
+    employee_data = {
+        'employee_id': employee.employee_id,
+        'employee_name': employee.employee_name,
+        'employee_number': employee.employee_number,
+        'role': employee.role,
+        'email': employee.email,
+        'gender': employee.gender,
+        'date_of_birth': decrypted_dob,
+        'duties': EmployeeDutySerializer(duties, many=True).data,
+        'experiences': EmployeeExperienceSerializer(experiences, many=True).data,
+    }
+    
+    return Response(employee_data)

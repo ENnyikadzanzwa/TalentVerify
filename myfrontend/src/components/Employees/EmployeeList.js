@@ -1,34 +1,76 @@
-// src/components/Employees/EmployeeList.js
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import axiosInstance from '../../axiosConfig';
+import { Container, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, TextField, Box, InputAdornment } from '@mui/material';
+import { Search as SearchIcon } from '@mui/icons-material';
 
 const EmployeeList = () => {
-    const [employees, setEmployees] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
-    useEffect(() => {
-        const fetchEmployees = async () => {
-            const response = await axiosInstance.get('/api/employees/');
-            setEmployees(response.data);
-        };
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const response = await axiosInstance.get('/employees/', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        setEmployees(response.data);
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+      }
+    };
+    fetchEmployees();
+  }, []);
 
-        fetchEmployees();
-    }, []);
+  const filteredEmployees = employees.filter((employee) =>
+    employee.employee_name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    return (
-        <div>
-            <h2>Employees</h2>
-            <Link to="/employees/new">Add Employee</Link>
-            <ul>
-                {employees.map(employee => (
-                    <li key={employee.employee_id}>
-                        {employee.employee_name}
-                        <Link to={`/employees/${employee.employee_id}/edit`}>Edit</Link>
-                    </li>
-                ))}
-            </ul>
-        </div>
-    );
+  return (
+    <Container>
+      <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h5" gutterBottom>
+          Employees
+        </Typography>
+        <TextField
+          variant="outlined"
+          placeholder="Search Employees"
+          fullWidth
+          margin="normal"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            )
+          }}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <Box sx={{ overflowX: 'auto' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Role</TableCell>
+                <TableCell>Department</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredEmployees.map((employee) => (
+                <TableRow key={employee.employee_id}>
+                  <TableCell>{employee.employee_name}</TableCell>
+                  <TableCell>{employee.role}</TableCell>
+                  <TableCell>{employee.department.department_name}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Box>
+      </Paper>
+    </Container>
+  );
 };
 
 export default EmployeeList;
