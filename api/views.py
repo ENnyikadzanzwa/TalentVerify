@@ -1,18 +1,16 @@
-from rest_framework import viewsets, permissions
-from .models import Company, Department, Employee, EmployeeDuty, User,EmployeeExperience
-from .serializers import CompanySerializer, DepartmentSerializer, EmployeeSerializer, EmployeeDutySerializer, UserSerializer,EmployeeExperienceSerializer
+from rest_framework import permissions,viewsets
+from .models import Company, Department, Employee, EmployeeDuty, User, EmployeeExperience
+from .serializers import CompanySerializer, DepartmentSerializer, EmployeeSerializer, EmployeeDutySerializer, UserSerializer, EmployeeExperienceSerializer
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth.hashers import make_password
 from rest_framework.permissions import IsAuthenticated
 import csv
-from rest_framework import status
 import random
 import string
 from cryptography.fernet import Fernet
 from django.conf import settings
-import base64
 from .utils import send_email
 
 
@@ -34,13 +32,54 @@ class DepartmentViewSet(viewsets.ModelViewSet):
         serializer.save(company=user.company)
 
 
-class EmployeeViewSet(viewsets.ModelViewSet):
-    serializer_class = EmployeeSerializer
-    permission_classes = [permissions.IsAuthenticated]
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_employees(request):
+    user = request.user
+    employees = Employee.objects.filter(company=user.company).select_related('department')
+    employee_data = []
+    for employee in employees:
+        employee_data.append({
+            'employee_id': employee.employee_id,
+            'employee_name': employee.employee_name,
+            'employee_number': employee.employee_number,
+            'department_id': employee.department.department_id,
+            'department_name': employee.department.department_name,
+            'role': employee.role,
+            'start_date': employee.start_date,
+            'email': employee.email,
+            'gender': employee.gender,
+            'date_of_birth': employee.get_decrypted_dob(),
+        })
+    return Response(employee_data)
 
-    def get_queryset(self):
-        user = self.request.user
-        return Employee.objects.filter(company=user.company)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def retrieve_employee(request, pk):
+    try:
+        employee = Employee.objects.get(pk=pk, company=request.user.company)
+    except Employee.DoesNotExist:
+        return Response({'detail': 'Employee not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    duties = EmployeeDuty.objects.filter(employee=employee)
+    experiences = EmployeeExperience.objects.filter(employee=employee)
+
+    employee_data = {
+        'employee_id': employee.employee_id,
+        'employee_name': employee.employee_name,
+        'employee_number': employee.employee_number,
+        'role': employee.role,
+        'email': employee.email,
+        'gender': employee.gender,
+        'date_of_birth': employee.get_decrypted_dob(),
+        'duties': EmployeeDutySerializer(duties, many=True).data,
+        'experiences': EmployeeExperienceSerializer(experiences, many=True).data,
+    }
+
+    return Response(employee_data)
+
 
 class EmployeeDutyViewSet(viewsets.ModelViewSet):
     queryset = EmployeeDuty.objects.all()
@@ -59,6 +98,7 @@ class EmployeeExperienceViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user
         serializer.save(employee=user.employee)
+
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -270,13 +310,10 @@ def get_employee_details(request, employee_id):
     try:
         employee = Employee.objects.get(pk=employee_id, company=request.user.company)
     except Employee.DoesNotExist:
-        return Response({'detail': 'Employee not found.'}, status=404)
+        return Response({'detail': 'Employee not found.'}, status=status.HTTP_404_NOT_FOUND)
 
     duties = EmployeeDuty.objects.filter(employee=employee)
     experiences = EmployeeExperience.objects.filter(employee=employee)
-    
-    fernet = Fernet(settings.ENCRYPTION_KEY.encode())
-    decrypted_dob = fernet.decrypt(employee.date_of_birth.encode()).decode()
     
     employee_data = {
         'employee_id': employee.employee_id,
@@ -285,9 +322,23 @@ def get_employee_details(request, employee_id):
         'role': employee.role,
         'email': employee.email,
         'gender': employee.gender,
-        'date_of_birth': decrypted_dob,
+        'date_of_birth': employee.get_decrypted_dob(),  # Use the method here
         'duties': EmployeeDutySerializer(duties, many=True).data,
         'experiences': EmployeeExperienceSerializer(experiences, many=True).data,
     }
     
     return Response(employee_data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    user = request.user
+    new_password = request.data.get('new_password')
+
+    if not new_password:
+        return Response({'detail': 'New password is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(new_password)
+    user.save()
+
+    return Response({'detail': 'Password updated successfully.'}, status=status.HTTP_200_OK)

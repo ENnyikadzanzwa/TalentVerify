@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, AppBar, Toolbar, IconButton, Typography, Drawer, List, ListItem, ListItemIcon, ListItemText, Box } from '@mui/material';
 import { Menu as MenuIcon, AccountCircle as AccountCircleIcon, Person as PersonIcon, Publish as PublishIcon } from '@mui/icons-material';
 import axiosInstance from '../../axiosConfig';
-
+import logo from '../../assets/logo.webp';
 const drawerWidth = 240;
 
 const HrManagerDashboard = () => {
@@ -18,7 +18,7 @@ const HrManagerDashboard = () => {
     useEffect(() => {
         const fetchHrManager = async () => {
             try {
-                const response = await axiosInstance.get('/user/me/', {
+                const response = await axiosInstance.get('/me/', {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
@@ -45,7 +45,7 @@ const HrManagerDashboard = () => {
     const drawer = (
         <div>
             <Toolbar>
-                <img src="/path/to/logo" alt="Talent Verify" style={{ width: '100%', height: 'auto', padding: '10px' }} />
+                 <img src={logo} alt="Talent Verify" style={{ width: '100%', height: 'auto', padding: '10px' }} />
             </Toolbar>
             <List>
                 <ListItem button onClick={() => setActiveComponent('manageEmployees')}>

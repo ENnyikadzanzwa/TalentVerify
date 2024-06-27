@@ -6,17 +6,13 @@ from rest_framework_simplejwt.views import (
 )
 from .views import *
 
-
 router = DefaultRouter()
 router.register(r'companies', CompanyViewSet, basename='company')
 router.register(r'departments', DepartmentViewSet, basename='department')
-router.register(r'employees', EmployeeViewSet, basename='employee')
 router.register(r'employee-duties', EmployeeDutyViewSet, basename='employee-duty')
 router.register(r'users', UserViewSet, basename='user')
 router.register(r'duties', EmployeeDutyViewSet)
 router.register(r'experiences', EmployeeExperienceViewSet)
-
-
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -28,5 +24,8 @@ urlpatterns = [
     path('bulk/', bulk_upload_employees, name='bulk_upload_employees'),
     path('company/', get_company_details, name='get_company_details'),
     path('department/<int:department_id>/employees/', department_employees, name='department_employees'),
-    path('employee/<int:employee_id>/', get_employee_details, name='get_employee_details'),
+    path('employees/', list_employees, name='list_employees'),
+    path('employees/<int:pk>/', retrieve_employee, name='retrieve_employee'),
+    path('employ/<int:employee_id>/', get_employee_details, name='get_employee_details'),
+    path('change_password/', change_password, name='change_password'),
 ]

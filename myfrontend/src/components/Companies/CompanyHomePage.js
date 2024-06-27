@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axiosInstance from '../../axiosConfig';
-import { Container, Grid, TextField, Button, Card, CardContent, Typography, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
-import { Search as SearchIcon, SaveAlt as SaveAltIcon } from '@mui/icons-material';
+import { Container, Grid, TextField, Button, Card, CardContent, Typography, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Menu, MenuItem } from '@mui/material';
+import { Search as SearchIcon, SaveAlt as SaveAltIcon, ArrowUpward as ArrowUpwardIcon, ArrowDownward as ArrowDownwardIcon, FilterList as FilterListIcon } from '@mui/icons-material';
 import { Bar, Pie } from 'react-chartjs-2';
 import { saveAs } from 'file-saver';
 import { toast } from 'react-toastify';
@@ -16,6 +16,11 @@ const CompanyHomePage = () => {
   const [genderData, setGenderData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [departments, setDepartments] = useState([]);
+  const [filterDepartment, setFilterDepartment] = useState('');
+  const [sortField, setSortField] = useState('');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const departmentChartRef = useRef(null);
   const yearChartRef = useRef(null);
@@ -30,10 +35,12 @@ const CompanyHomePage = () => {
           }
         });
         const companyId = userResponse.data.company_id;
-        const response = await axiosInstance.get(`/employees/?company=${companyId}`);
-        setEmployees(response.data);
-        setFilteredEmployees(response.data);
-        generateChartData(response.data);
+        const employeesResponse = await axiosInstance.get(`/employees/?company=${companyId}`);
+        const departmentsResponse = await axiosInstance.get(`/departments/?company=${companyId}`);
+        setEmployees(employeesResponse.data);
+        setFilteredEmployees(employeesResponse.data);
+        setDepartments(departmentsResponse.data);
+        generateChartData(employeesResponse.data);
         setLoading(false);
       } catch (err) {
         setError('Error fetching employees');
@@ -45,15 +52,43 @@ const CompanyHomePage = () => {
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
-    if (e.target.value === '') {
-      setFilteredEmployees(employees);
-    } else {
-      setFilteredEmployees(
-        employees.filter((employee) =>
-          employee.employee_name.toLowerCase().includes(e.target.value.toLowerCase())
-        )
+    filterAndSortEmployees(e.target.value, filterDepartment, sortField, sortOrder);
+  };
+
+  const handleSort = (field) => {
+    const order = sortField === field && sortOrder === 'asc' ? 'desc' : 'asc';
+    setSortField(field);
+    setSortOrder(order);
+    filterAndSortEmployees(searchTerm, filterDepartment, field, order);
+  };
+
+  const handleDepartmentFilterChange = (value) => {
+    setFilterDepartment(value);
+    filterAndSortEmployees(searchTerm, value, sortField, sortOrder);
+  };
+
+  const filterAndSortEmployees = (search, department, field, order) => {
+    let filtered = employees;
+
+    if (search) {
+      filtered = filtered.filter((employee) =>
+        employee.employee_name.toLowerCase().includes(search.toLowerCase())
       );
     }
+
+    if (department) {
+      filtered = filtered.filter((employee) => employee.department_id === department);
+    }
+
+    if (field) {
+      filtered.sort((a, b) => {
+        if (a[field] < b[field]) return order === 'asc' ? -1 : 1;
+        if (a[field] > b[field]) return order === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    setFilteredEmployees(filtered);
   };
 
   const generateChartData = (data) => {
@@ -63,10 +98,10 @@ const CompanyHomePage = () => {
 
     data.forEach((employee) => {
       // Count by department
-      if (departmentCount[employee.department]) {
-        departmentCount[employee.department]++;
+      if (departmentCount[employee.department_name]) {
+        departmentCount[employee.department_name]++;
       } else {
-        departmentCount[employee.department] = 1;
+        departmentCount[employee.department_name] = 1;
       }
 
       // Count by year joined
@@ -131,6 +166,14 @@ const CompanyHomePage = () => {
     saveAs(chartURL, `${chartName}.png`);
   };
 
+  const handleDepartmentClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleDepartmentClose = () => {
+    setAnchorEl(null);
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
@@ -162,11 +205,40 @@ const CompanyHomePage = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Employee Name</TableCell>
+                      <TableCell>
+                        Employee Name
+                        <IconButton onClick={() => handleSort('employee_name')}>
+                          {sortField === 'employee_name' && sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
+                        </IconButton>
+                      </TableCell>
                       <TableCell>Employee Number</TableCell>
-                      <TableCell>Department</TableCell>
+                      <TableCell>
+                        Department
+                        <IconButton onClick={handleDepartmentClick}>
+                          <FilterListIcon />
+                        </IconButton>
+                        <Menu
+                          anchorEl={anchorEl}
+                          open={Boolean(anchorEl)}
+                          onClose={handleDepartmentClose}
+                        >
+                          <MenuItem value="" onClick={() => handleDepartmentFilterChange('')}>
+                            All
+                          </MenuItem>
+                          {departments.map((dept) => (
+                            <MenuItem key={dept.department_id} value={dept.department_id} onClick={() => handleDepartmentFilterChange(dept.department_id)}>
+                              {dept.department_name}
+                            </MenuItem>
+                          ))}
+                        </Menu>
+                      </TableCell>
                       <TableCell>Role</TableCell>
-                      <TableCell>Start Date</TableCell>
+                      <TableCell>
+                        Start Date
+                        <IconButton onClick={() => handleSort('start_date')}>
+                          {sortField === 'start_date' && sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
+                        </IconButton>
+                      </TableCell>
                       <TableCell>Email</TableCell>
                       <TableCell>Gender</TableCell>
                       <TableCell>Date of Birth</TableCell>
@@ -177,7 +249,7 @@ const CompanyHomePage = () => {
                       <TableRow key={employee.employee_id}>
                         <TableCell>{employee.employee_name}</TableCell>
                         <TableCell>{employee.employee_number}</TableCell>
-                        <TableCell>{employee.department}</TableCell>
+                        <TableCell>{employee.department_name}</TableCell>
                         <TableCell>{employee.role}</TableCell>
                         <TableCell>{employee.start_date}</TableCell>
                         <TableCell>{employee.email}</TableCell>

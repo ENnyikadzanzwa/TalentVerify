@@ -62,6 +62,10 @@ class Employee(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def get_decrypted_dob(self):
+        fernet = Fernet(settings.ENCRYPTION_KEY.encode())
+        return fernet.decrypt(self.date_of_birth).decode()
+
 
 class EmployeeDuty(models.Model):
     id = models.AutoField(primary_key=True)

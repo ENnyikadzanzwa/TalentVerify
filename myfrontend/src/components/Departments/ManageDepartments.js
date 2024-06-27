@@ -1,6 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../axiosConfig';
-import { Container, Grid, TextField, Button, Card, CardContent, Typography, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
+import {
+  Container,
+  Grid,
+  TextField,
+  Button,
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl
+} from '@mui/material';
 import { toast } from 'react-toastify';
 import FilterListIcon from '@mui/icons-material/FilterList';
 
@@ -67,7 +93,7 @@ const ManageDepartments = () => {
 
   const handleEmployeeClick = async (employeeId) => {
     try {
-      const response = await axiosInstance.get(`/employees/${employeeId}/`, {
+      const response = await axiosInstance.get(`/employ/${employeeId}/`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -221,21 +247,29 @@ const ManageDepartments = () => {
       {selectedEmployee && (
         <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="sm">
           <DialogTitle>Employee Details</DialogTitle>
-          <DialogContent>
+          <DialogContent
+            sx={{
+              border: '5px solid green',
+              color: 'white',
+              textShadow: '1px 1px 2px black',
+              backgroundColor: '#333',
+              padding: '20px'
+            }}
+          >
             <DialogContentText>
-              <Typography variant="h6">Name: {selectedEmployee.employee_name}</Typography>
-              <Typography variant="body1">Employee Number: {selectedEmployee.employee_number}</Typography>
-              <Typography variant="body1">Role: {selectedEmployee.role}</Typography>
-              <Typography variant="body1">Email: {selectedEmployee.email}</Typography>
-              <Typography variant="body1">Gender: {selectedEmployee.gender}</Typography>
-              <Typography variant="body1">Date of Birth: {selectedEmployee.date_of_birth}</Typography>
-              <Typography variant="body1">Duties:</Typography>
+              <Typography variant="h6" sx={{ color: 'white' }}>Name: {selectedEmployee.employee_name}</Typography>
+              <Typography variant="body1" sx={{ color: 'white' }}>Employee Number: {selectedEmployee.employee_number}</Typography>
+              <Typography variant="body1" sx={{ color: 'white' }}>Role: {selectedEmployee.role}</Typography>
+              <Typography variant="body1" sx={{ color: 'white' }}>Email: {selectedEmployee.email}</Typography>
+              <Typography variant="body1" sx={{ color: 'white' }}>Gender: {selectedEmployee.gender}</Typography>
+              <Typography variant="body1" sx={{ color: 'white' }}>Date of Birth: {selectedEmployee.date_of_birth}</Typography>
+              <Typography variant="body1" sx={{ color: 'white' }}>Duties:</Typography>
               {selectedEmployee.duties && selectedEmployee.duties.map((duty) => (
-                <Typography key={duty.id} variant="body2">{duty.duty}</Typography>
+                <Typography key={duty.id} variant="body2" sx={{ color: 'white' }}>{duty.duty}</Typography>
               ))}
-              <Typography variant="body1">Experiences:</Typography>
+              <Typography variant="body1" sx={{ color: 'white' }}>Experiences:</Typography>
               {selectedEmployee.experiences && selectedEmployee.experiences.map((experience) => (
-                <Typography key={experience.id} variant="body2">{experience.company_name} - {experience.position}</Typography>
+                <Typography key={experience.id} variant="body2" sx={{ color: 'white' }}>{experience.company_name} - {experience.position}</Typography>
               ))}
             </DialogContentText>
           </DialogContent>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { AppBar, Toolbar, IconButton, Typography, Drawer, List, ListItem, ListItemIcon, ListItemText, CssBaseline, Box } from '@mui/material';
-import { Menu as MenuIcon, Home as HomeIcon, Group as GroupIcon, Add as AddIcon, ExitToApp as ExitToAppIcon } from '@mui/icons-material';
+import { AppBar, Toolbar, IconButton, Typography, Drawer, List, ListItem, ListItemIcon, ListItemText, CssBaseline, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField, Button } from '@mui/material';
+import { Menu as MenuIcon, Home as HomeIcon, Group as GroupIcon, Add as AddIcon, ExitToApp as ExitToAppIcon, AccountCircle as AccountCircleIcon } from '@mui/icons-material';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
@@ -8,14 +8,17 @@ import CompanyHomePage from '../Companies/CompanyHomePage';
 import CompanyProfile from '../Companies/CompanyProfile';
 import AddEmployee from '../Employees/AddEmployee';
 import ManageDepartments from '../Departments/ManageDepartments';
-import EmployeeList from '../Employees/EmployeeList'; // Import the EmployeeList component
-import logo from '../../assets/logo.webp'; // Import the logo image
+import EmployeeList from '../Employees/EmployeeList';
+import logo from '../../assets/logo.webp';
+import axiosInstance from '../../axiosConfig';
 
 const drawerWidth = 240;
 
 const CompanyAdminDashboard = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeComponent, setActiveComponent] = useState('home');
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
   const handleDrawerToggle = () => {
@@ -29,6 +32,29 @@ const CompanyAdminDashboard = () => {
       autoClose: 2000,
     });
     navigate('/login');
+  };
+
+  const handleProfileClick = () => {
+    setProfileOpen(true);
+  };
+
+  const handleProfileClose = () => {
+    setProfileOpen(false);
+  };
+
+  const handlePasswordChange = (e) => {
+    setPassword(e.target.value);
+  };
+
+  const handlePasswordUpdate = async () => {
+    try {
+      await axiosInstance.post('/change_password/', { new_password: password });
+      toast.success('Password updated successfully.');
+      setProfileOpen(false);
+      setPassword('');
+    } catch (err) {
+      toast.error('Error updating password.');
+    }
   };
 
   const renderComponent = () => {
@@ -96,9 +122,12 @@ const CompanyAdminDashboard = () => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             Company Admin Dashboard
           </Typography>
+          <IconButton color="inherit" onClick={handleProfileClick}>
+            <AccountCircleIcon />
+          </IconButton>
         </Toolbar>
       </AppBar>
       <Box
@@ -138,6 +167,31 @@ const CompanyAdminDashboard = () => {
         <Toolbar />
         {renderComponent()}
       </Box>
+      <Dialog open={profileOpen} onClose={handleProfileClose}>
+        <DialogTitle>Update Password</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            To update your password, please enter your new password below.
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="New Password"
+            type="password"
+            fullWidth
+            value={password}
+            onChange={handlePasswordChange}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleProfileClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handlePasswordUpdate} color="primary">
+            Update
+          </Button>
+        </DialogActions>
+      </Dialog>
       <ToastContainer />
     </Box>
   );
